@@ -8,15 +8,24 @@ use App\Clients\StockStatus;
 use Illuminate\Support\Facades\Http;
 
 
+
 class BestBuy implements Client
 {
     public function checkAvailability(Stock $stock): StockStatus
     {
-        $results = Http::get('http://foo.test')->json();
+        $results = Http::get($this->endpoint($stock->sku))->json();
 
         return new StockStatus(
-            $results['available'],
-            $results['price']
+            $results['onlineAvailability'],
+            (int) $results['salePrice'] * 100 // dollar to cents
         );
+    }
+
+
+    public function endpoint($sku)
+    {
+        $key = config('services.clients.bestBuy.key');
+
+        return "https://api.bestbuy.com/v1/products/{$sku}.json?apiKey={$key}";
     }
 }
